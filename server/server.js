@@ -60,22 +60,34 @@ app.get("/genres", function (req, res) {
    a list of the results you obtain. Only include the properties 
    mentioned in the README when sending back the results to the client */
 app.get("/search", async function (req, res) {
-  const searchTerm = req.query.q;
+  const searchTerm = req.query.q || req.query.query;
   if (!searchTerm) {
-    res.status(400).send({ error: "Missing search query parameter 'q'" });
+    res.status(400).send({ error: "Missing search query parameter" });
     return;
   }
   try {
-    const apiKey = "plzInsertYourOMDBApiKey"; // Replace with your OMDB API key
+    const apiKey = "7939c55f"; // Use your OMDB API key
     const omdbUrl = `http://www.omdbapi.com/?apikey=${apiKey}&s=${encodeURIComponent(searchTerm)}`;
     const response = await axios.get(omdbUrl);
-    if (response.data && response.data.Search) {
-      const results = response.data.Search.map((movie) => ({
-        imdbID: movie.imdbID,
-        Title: movie.Title,
-        Year: movie.Year,
-        Poster: movie.Poster,
-      }));
+    if (
+      response.data &&
+      response.data.Response === "True" &&
+      response.data.Search
+    ) {
+      const arr = response.data.Search;
+      const results = [];
+      for (let i = 0; i < arr.length; i++) {
+        const movie = arr[i];
+        let yearNum = null;
+        if (/^\d{4}$/.test(movie.Year)) {
+          yearNum = Number(movie.Year);
+        }
+        results.push({
+          imdbID: movie.imdbID,
+          Title: movie.Title,
+          Year: yearNum,
+        });
+      }
       res.send(results);
     } else {
       res.send([]);
@@ -84,7 +96,6 @@ app.get("/search", async function (req, res) {
     res.status(500).send({ error: "Failed to fetch from OMDB API" });
   }
 });
-
 /* Task 2.2 Add a POST /movies endpoint that receives an array of imdbIDs that the
    user selected to be added to the movie collection. Search them on omdbapi.com,
    convert the data to the format we use since exercise 1 and add the data to the
@@ -95,7 +106,7 @@ app.post("/addMovies", async function (req, res) {
     res.status(400).send({ error: "Request body must be a non-empty array of imdbIDs" });
     return;
   }
-  const apiKey = "plzInsertYourOMDBApiKey"; // Replace with your OMDB API key
+  const apiKey = "7939c55f"; // Use your actual OMDB API key
   const addedMovies = [];
   for (const imdbID of imdbIDs) {
     try {
