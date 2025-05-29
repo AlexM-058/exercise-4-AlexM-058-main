@@ -1,0 +1,23 @@
+{
+  "name": "web-23-exercise-1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "start-nodemon": "nodemon server/server.js",
+    "test": "npx cypress run",
+    "cypress": "npx cypress open"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "cypress": "^14.3.2",
+    "nodemon": "^3.1.10"
+  }
+}

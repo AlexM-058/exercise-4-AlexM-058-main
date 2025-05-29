@@ -1,0 +1,11 @@
+@import url(base.css);
+
+input,
+select,
+textarea {
+  width: 100%;
+}
+
+div {
+  margin: 4px 0px;
+}

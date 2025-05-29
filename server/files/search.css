@@ -1,0 +1,34 @@
+@import url(grid-base.css);
+
+form#search {
+    display: flex;
+    justify-content: space-between;
+    column-gap: 4px;
+}
+
+section {
+    margin: 4px;
+}
+
+#search input {
+    width: 100%;
+}
+
+#results {
+    background-color: lightgray;
+    border-radius: 8px;
+}
+
+#results p {
+    padding: 16px;
+}
+
+#results button {
+    margin: 4px;
+}
+
+#results article {
+    margin: 4px;
+    padding: 4px;
+}
+
