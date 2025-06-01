@@ -1,11 +1,10 @@
 function search() {
   /* Task 1.2: Initialize the searchForm correctly */
-  const searchForm = document.getElementById("search"); // Use the correct form id
+  const searchForm = document.getElementById("search");
 
   if (!searchForm) {
     // Prevent error if form is not found in the DOM
     console.error("Search form not found in the document.");
-    
     return;
   }
 
@@ -14,6 +13,7 @@ function search() {
     xhr.onload = function () {
       const sectionElement = document.querySelector("section:nth-of-type(2)");
 
+      // Golește secțiunea de rezultate existente
       while (sectionElement.childElementCount > 0) {
         sectionElement.firstChild.remove();
       }
@@ -22,32 +22,57 @@ function search() {
         const results = JSON.parse(xhr.responseText);
 
         /* Task 1.3 Insert the results as specified. Do NOT
-           forget to also cover the case in which no results
-           are available. 
-          */
+                 forget to also cover the case in which no results
+                 are available.
+               */
         if (!results || results.length === 0) {
           const p = document.createElement("p");
-          p.textContent = "No results found.";
+          // Modificat: Mesajul include acum interogarea de căutare
+          p.textContent = `No results for your query '${queryValue}' found.`;
           sectionElement.appendChild(p);
         } else {
-          // Render each result as an <article> in #results section (for Cypress test)
-          const resultsSection = document.getElementById("results") || sectionElement;
+          const resultsSection =
+            document.getElementById("results") || sectionElement;
           results.forEach((movie) => {
             const article = document.createElement("article");
             article.id = movie.imdbID;
             article.innerHTML = `
-              <h2>${movie.Title}</h2>
-              <p>Year: ${movie.Year !== null ? movie.Year : "N/A"}</p>
-              <p>imdbID: ${movie.imdbID}</p>
-            `;
+                          <input type="checkbox" id="${movie.imdbID}" value="${movie.imdbID}">
+                          <label for="${movie.imdbID}">${movie.Title}</label>
+                      `;
             resultsSection.appendChild(article);
+          });
+
+          // Adăugăm butonul "Add selected to collection" după afișarea rezultatelor
+          const addSelectedButton = document.createElement("button");
+          addSelectedButton.textContent = "Add selected to collection";
+          addSelectedButton.id = "addSelectedMoviesButton";
+          resultsSection.appendChild(addSelectedButton);
+
+          // Adăugăm un event listener pentru noul buton
+          addSelectedButton.addEventListener("click", function () {
+            const selectedImdbIDs = [];
+            // Selectăm toate checkbox-urile din secțiunea de rezultate care sunt bifate
+            const checkboxes = resultsSection.querySelectorAll(
+              'input[type="checkbox"]:checked'
+            );
+            checkboxes.forEach((checkbox) => {
+              selectedImdbIDs.push(checkbox.value);
+            });
+
+            if (selectedImdbIDs.length > 0) {
+              addMovies(selectedImdbIDs);
+            } else {
+              alert("Please select at least one movie to add.");
+            }
           });
         }
       }
     };
 
     /* Task 1.2: Finish the xhr configuration and send the request */
-    const queryValue = document.getElementById("query").value;
+    const queryInput = document.getElementById("query");
+    const queryValue = queryInput ? queryInput.value : "";
     xhr.open("GET", "/search?query=" + encodeURIComponent(queryValue));
     xhr.setRequestHeader("Accept", "application/json");
     xhr.send();
@@ -55,12 +80,12 @@ function search() {
 }
 
 /* Task 2.1. Add a function that you use as an event handler for when
-    the button you added above in 1.3. is clicked. In it, call the
-    POST /addMovies endpoint and pass the array of imdbID to be added
-    as payload. */
+  the button you added above in 1.3. is clicked. In it, call the
+  POST /addMovies endpoint and pass the array of imdbID to be added
+  as payload. */
 function addMovies(imdbIDs) {
   const xhr = new XMLHttpRequest();
-  xhr.open("POST", "/addMovies");
+  xhr.open("POST", "/movies");
   xhr.setRequestHeader("Content-Type", "application/json");
   xhr.onload = function () {
     if (xhr.status === 200 || xhr.status === 201) {
@@ -74,9 +99,6 @@ function addMovies(imdbIDs) {
 
 // Prevent favicon.ico errors in development (optional, client-side workaround)
 window.onload = function () {
-  // Attach the search handler to the form's submit event for better UX
-  // (No need to handle submit since the button is type="button")
-  // Also allow the search button to trigger search (for Cypress and manual click)
   const searchButton = document.getElementById("searchButton");
   if (searchButton) {
     searchButton.addEventListener("click", function (e) {
@@ -85,18 +107,12 @@ window.onload = function () {
       search();
     });
   }
-  // Also trigger search on page load if there is a query in the input (for Cypress tests)
   const queryInput = document.getElementById("query");
   if (queryInput && queryInput.value) {
     search();
   }
-  // Optionally, prevent favicon.ico requests from causing errors in the console
   const link = document.createElement("link");
   link.rel = "icon";
   link.href = "data:;base64,=";
   document.head.appendChild(link);
 };
-
-// In summary: The /search endpoint is called in search.js by the search() function,
-// which is triggered when the search form is submitted or the search button is clicked.
-// The results are displayed in the second <section> element of the HTML page.

@@ -79,8 +79,11 @@ app.get("/search", async function (req, res) {
       for (let i = 0; i < arr.length; i++) {
         const movie = arr[i];
         let yearNum = null;
+        // Convert Year to number or null if not a single year
         if (/^\d{4}$/.test(movie.Year)) {
           yearNum = Number(movie.Year);
+        } else {
+          yearNum = null;
         }
         results.push({
           imdbID: movie.imdbID,
