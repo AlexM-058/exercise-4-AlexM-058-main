@@ -100,7 +100,7 @@ app.get("/search", async function (req, res) {
    user selected to be added to the movie collection. Search them on omdbapi.com,
    convert the data to the format we use since exercise 1 and add the data to the
    movie collection. */
-app.post("/addMovies", async function (req, res) {
+app.post("/movies", async function (req, res) {
   const imdbIDs = req.body;
   if (!Array.isArray(imdbIDs) || imdbIDs.length === 0) {
     res.status(400).send({ error: "Request body must be a non-empty array of imdbIDs" });
@@ -114,13 +114,58 @@ app.post("/addMovies", async function (req, res) {
       const response = await axios.get(omdbUrl);
       const data = response.data;
       if (data && data.Response === "True") {
-        // Convert OMDB data to our format
+        // Convert OMDB data to the required format with 12 keys
+        // Convert Released to ISO 8601 format (yyyy-mm-dd) if possible
+        let releasedIso = null;
+        if (data.Released && /^\d{2} \w{3} \d{4}$/.test(data.Released)) {
+          // Example: "25 Jan 2008"
+          const [day, mon, year] = data.Released.split(" ");
+          const months = {
+            Jan: "01", Feb: "02", Mar: "03", Apr: "04", May: "05", Jun: "06",
+            Jul: "07", Aug: "08", Sep: "09", Oct: "10", Nov: "11", Dec: "12"
+          };
+          releasedIso = `${year}-${months[mon]}-${day.padStart(2, "0")}`;
+        } else {
+          releasedIso = null;
+        }
+        // Convert Runtime to a number (minutes)
+        let runtimeNum = null;
+        if (data.Runtime && /^\d+ min$/.test(data.Runtime)) {
+          runtimeNum = Number(data.Runtime.split(" ")[0]);
+        } else {
+          runtimeNum = null;
+        }
+        // Convert Metascore to a number if possible and clamp between 0 and 100
+        let metascoreNum = null;
+        if (data.Metascore && /^\d+$/.test(data.Metascore)) {
+          metascoreNum = Number(data.Metascore);
+          if (metascoreNum < 0) metascoreNum = 0;
+          if (metascoreNum > 100) metascoreNum = 100;
+        } else {
+          metascoreNum = null;
+        }
+        // Convert imdbRating to a number if possible and clamp between 0 and 10
+        let imdbRatingNum = null;
+        if (data.imdbRating && !isNaN(data.imdbRating)) {
+          imdbRatingNum = Number(data.imdbRating);
+          if (imdbRatingNum < 0) imdbRatingNum = 0;
+          if (imdbRatingNum > 10) imdbRatingNum = 10;
+        } else {
+          imdbRatingNum = null;
+        }
         const movie = {
           imdbID: data.imdbID,
           Title: data.Title,
-          Year: data.Year,
-          Poster: data.Poster,
+          Released: releasedIso,
+          Runtime: runtimeNum,
           Genres: data.Genre ? data.Genre.split(",").map(g => g.trim()) : [],
+          Directors: data.Director ? data.Director.split(",").map(d => d.trim()) : [],
+          Writers: data.Writer ? data.Writer.split(",").map(w => w.trim()) : [],
+          Actors: data.Actors ? data.Actors.split(",").map(a => a.trim()) : [],
+          Plot: data.Plot,
+          Poster: data.Poster,
+          Metascore: metascoreNum,
+          imdbRating: imdbRatingNum
         };
         movieModel[movie.imdbID] = movie;
         addedMovies.push(movie);
@@ -129,7 +174,7 @@ app.post("/addMovies", async function (req, res) {
       // Ignore errors for individual movies
     }
   }
-  res.status(201).send(addedMovies);
+  res.status(200).send(addedMovies);
 });
 
 /* Task 3.2. Add the DELETE /movies/:imdbID endpoint which removes the movie
@@ -147,3 +192,7 @@ app.delete("/movies/:imdbID", function (req, res) {
 app.listen(3000);
 
 console.log("Server now listening on http://localhost:3000/");
+
+// Nu, nu trebuie importată funcția search din search.js în server.js.
+// search.js rulează în browser (client-side), iar server.js rulează pe server (server-side).
+// Ele comunică prin HTTP requests (ex: GET /search), nu prin import direct de funcții.

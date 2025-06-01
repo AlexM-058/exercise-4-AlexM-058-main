@@ -1,9 +1,11 @@
 function search() {
   /* Task 1.2: Initialize the searchForm correctly */
-  const searchForm = document.getElementById("searchForm"); 
+  const searchForm = document.getElementById("search"); // Use the correct form id
 
   if (!searchForm) {
     // Prevent error if form is not found in the DOM
+    console.error("Search form not found in the document.");
+    
     return;
   }
 
@@ -73,13 +75,13 @@ function addMovies(imdbIDs) {
 // Prevent favicon.ico errors in development (optional, client-side workaround)
 window.onload = function () {
   // Attach the search handler to the form's submit event for better UX
-  // S-a modificat pentru a asculta direct evenimentul 'click' al butonului
-  const searchForm = document.getElementById("search"); // Acum caută formularul cu id="search"
-  const searchButton = document.getElementById("searchButton"); // Noul element pentru buton
-
+  // (No need to handle submit since the button is type="button")
+  // Also allow the search button to trigger search (for Cypress and manual click)
+  const searchButton = document.getElementById("searchButton");
   if (searchButton) {
     searchButton.addEventListener("click", function (e) {
-      // e.preventDefault(); // Nu mai e strict necesar aici
+      e.preventDefault();
+      console.log("button pressed");
       search();
     });
   }
